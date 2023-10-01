@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bat and Ball Game</title>
+    <style>
+        canvas {
+            background-color: grey;
+            display: block;
+            margin: 0 auto;
+        }
+        #score {
+            font-size: 56px;
+            color: blue;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
+    <div id="score">0 - 0</div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        const paddleWidth = 10;
+        const paddleHeight = 100;
+        const ballSize = 10;
+
+        let leftPaddleY = (canvas.height - paddleHeight) / 2;
+        let rightPaddleY = (canvas.height - paddleHeight) / 2;
+        let ballX = canvas.width / 2;
+        let ballY = canvas.height / 2;
+        let ballSpeedX = 5;
+        let ballSpeedY = 5;
+        let ballAccelerationY = 0.02; // Gravity-like acceleration rate
+        let ballAccelerationX = 0.01; // Acceleration rate
+
+        let upArrowPressed = false;
+        let downArrowPressed = false;
+
+        let userScore = 0;
+        let computerScore = 0;
+
+        const scoreDisplay = document.getElementById("score");
+
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "ArrowUp") {
+                upArrowPressed = true;
+            } else if (event.key === "ArrowDown") {
+                downArrowPressed = true;
+            }
+        });
+
+        document.addEventListener("keyup", function (event) {
+            if (event.key === "ArrowUp") {
+                upArrowPressed = false;
+            } else if (event.key === "ArrowDown") {
+                downArrowPressed = false;
+            }
+        });
+
+        function moveComputerPaddle() {
+            // Simple computer opponent logic
+            const rightPaddleCenterY = rightPaddleY + paddleHeight / 2;
+            if (rightPaddleCenterY < ballY - 35) {
+                rightPaddleY += 5;
+            } else if (rightPaddleCenterY > ballY + 35) {
+                rightPaddleY -= 5;
+            }
+        }
+
+        function moveUserPaddle(event) {
+            // Move the user paddle based on mouse movement
+            const mouseY = event.clientY - canvas.getBoundingClientRect().top;
+            leftPaddleY = mouseY - paddleHeight / 2;
+        }
+
+        function moveLeftPaddle() {
+            // Move the left paddle based on arrow key input
+            if (upArrowPressed && leftPaddleY > 0) {
+                leftPaddleY -= 5;
+            } else if (downArrowPressed && leftPaddleY < canvas.height - paddleHeight) {
+                leftPaddleY += 5;
+            }
+        }
+
+        function drawEverything() {
+            // Clear the canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw left paddle
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, leftPaddleY, paddleWidth, paddleHeight);
+
+            // Draw right paddle
+            ctx.fillRect(canvas.width - paddleWidth, rightPaddleY, paddleWidth, paddleHeight);
+
+            // Draw ball
+            ctx.beginPath();
+            ctx.arc(ballX, ballY, ballSize, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Draw score
+            scoreDisplay.textContent = `${userScore} - ${computerScore}`;
+        }
+
+        function update() {
+            // Move the ball
+            ballX += ballSpeedX;
+            ballY += ballSpeedY;
+
+            // Apply gravity-like acceleration
+            ballSpeedY += ballAccelerationY;
+
+            // Accelerate the ball horizontally
+            if (ballSpeedX > 0) {
+                ballSpeedX += ballAccelerationX;
+            } else {
+                ballSpeedX -= ballAccelerationX;
+            }
+
+            // Ball collisions with top and bottom walls
+            if (ballY < 0 || ballY > canvas.height) {
+                ballSpeedY = -ballSpeedY;
+            }
+
+            // Ball collisions with paddles
+            const leftPaddleCollision = ballX <= paddleWidth && ballY >= leftPaddleY && ballY <= leftPaddleY + paddleHeight;
+            const rightPaddleCollision = ballX >= canvas.width - paddleWidth && ballY >= rightPaddleY && ballY <= rightPaddleY + paddleHeight;
+
+            if (leftPaddleCollision || rightPaddleCollision) {
+                ballSpeedX = -ballSpeedX;
+
+                // Calculate the spin speed based on paddle movement
+                const spinFactor = Math.abs(ballSpeedY / 10); // Adjust the factor as needed
+                ballSpeedY += spinFactor;
+            }
+
+            // Ball out of bounds
+            if (ballX < 0) {
+                // Computer scores a point
+                computerScore++;
+                resetBall();
+            } else if (ballX > canvas.width) {
+                // User scores a point
+                userScore++;
+                resetBall();
+            }
+
+            // Move the computer paddle
+            moveComputerPaddle();
+
+            // Move the user-controlled left paddle
+            canvas.addEventListener("mousemove", moveUserPaddle);
+
+            // Move the right paddle (computer-controlled)
+            moveLeftPaddle();
+
+            // Draw everything
+            drawEverything();
+        }
+
+        function resetBall() {
+            // Reset ball position and speed
+            ballX = canvas.width / 2;
+            ballY = canvas.height / 2;
+            ballSpeedX = 5;
+            ballSpeedY = 5;
+        }
+
+        setInterval(update, 1000 / 60); // 60 frames per second
+    </script>
+</body>
+</html>

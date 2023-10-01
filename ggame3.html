@@ -128,8 +128,10 @@
             }
 
             // Ball collisions with paddles
-            const leftPaddleCollision = ballX <= paddleWidth && ballY >= leftPaddleY && ballY <= leftPaddleY + paddleHeight;
-            const rightPaddleCollision = ballX >= canvas.width - paddleWidth && ballY >= rightPaddleY && ballY <= rightPaddleY + paddleHeight;
+            //added fix to stop bug not detecting in corners
+            const leftPaddleCollision = ballX - ballSize <= paddleWidth && ballY >= leftPaddleY && ballY <= leftPaddleY + paddleHeight;
+            const rightPaddleCollision = ballX + ballSize >= canvas.width - paddleWidth && ballY >= rightPaddleY && ballY <= rightPaddleY + paddleHeight;
+
 
             if (leftPaddleCollision || rightPaddleCollision) {
                 ballSpeedX = -ballSpeedX;
